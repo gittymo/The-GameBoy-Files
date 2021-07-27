@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=(0061)http://www.matt-tighe.co.uk/gba/tutorials/vstudio/vstudio.htm -->
+<HTML><HEAD><TITLE>Setting Up Your GBA Development Environment</TITLE>
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<STYLE type=text/css>.directory {
+	FONT-WEIGHT: bold; FONT-FAMILY: "Courier New", Courier, mono
+}
+.source {
+	FONT-FAMILY: "Courier New", Courier, mono
+}
+.section {
+	FONT-WEIGHT: bold; FONT-SIZE: 14pt; COLOR: #009900; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.heading {
+	FONT-WEIGHT: bold; COLOR: #006600; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+</STYLE>
+
+<META content="MSHTML 5.50.4134.600" name=GENERATOR></HEAD>
+<BODY bgColor=#ffffff>
+<P class=section>Setting Up Your GBA Development Environment</P>
+<P>GCC is a great and FREE C/C++ compiler and assembler which can be used to 
+create Gameboy Advance programs. However there is little documentation available 
+on how to properly setup the system.</P>
+<P>Another bug-bear is that the ports of GCC around on the GBA sites need to be 
+setup specially to allow use of the run-time libraries. After a bit of playing 
+I've realised that the libraries have been ported and setup, you just need to 
+link to them properly and use the header files.</P>
+<P>In this document, I'll show you how I setup my development environment with 
+full runtime library support. My IDE of choice is Visual Studio because I do 
+alot of Windows C programming in it.</P>
+<P>So, lets begin....</P>
+<P class=section>Installing GCC</P>
+<UL>
+  <LI>First, download GCC and the GCC Header Files from Jeff Frowheins website 
+  www.devrs.com 
+  <LI>Unzip the GCC archive into a directory on your hard disk I use <SPAN 
+  class=directory>\Gcc-arm</SPAN>. 
+  <LI>Unzip the GCC Header archive into an include subdirectory <SPAN 
+  class=directory>\Gcc-arm\include</SPAN>. 
+  <LI>Create a subdirectory for the library files<SPAN class=directory> 
+  \Gcc-arm\lib</SPAN>. 
+  <LI>Copy all library files (*.a) from the <SPAN 
+  class=directory>\Gcc-arm</SPAN> directory to the <SPAN 
+  class=directory>\Gcc-arm\lib</SPAN> subdirectory. </LI></UL>
+<P class=section>Setting up Visual Studio</P>
+<UL>
+  <LI><SPAN class=heading>Create a new Makefile project.</SPAN><BR><BR><IMG 
+  height=387 src="Setting Up Your GBA Development Environment_files/setup.gif" 
+  width=477> <BR>Change the output field to be the name of you desired gameboy 
+  advance rom image. The example seen here is sprite.bin.<BR><BR>Hit finish. You 
+  will see this twice, once for debug and once for release. Just set both the 
+  same. You could use different makefiles, one including debug symbols but I 
+  haven't got a GBA debugger to use so there is no point. This means we will use 
+  Microsoft NMAKE instead of GNU make so I realise that this tutorial is not 
+  going to be of use for everyone.<BR><BR>
+  <LI><SPAN class=heading>Add a path to GCC in Visual Studio</SPAN><BR><BR><IMG 
+  height=322 
+  src="Setting Up Your GBA Development Environment_files/directory.gif" 
+  width=417><BR>Go to the Tools menu, choose Options and select the directories 
+  tab.<BR>Show directories for Executable files and add an entry to the root of 
+  where you installed GCC in my case this is <SPAN 
+  class=directory>D:\Gcc-arm</SPAN> as seen above.<BR><BR>This is required so 
+  the when you try and compile your project, Visual Studio can find GCC on your 
+  system. <BR><BR>
+  <LI><SPAN class=heading>Create your Makefile</SPAN><BR><BR>The make filename 
+  is refered to in the project setup dialog box above. In this case it is called 
+  sprite.mak. Its fairly simple and similar to the unix style make. I choose to 
+  use NMAKE because I can't seem to get a decent makefile to work with GNU make, 
+  it always crashes out? Anyway you could use GNU make by changing the command 
+  line in your project setup.<BR><BR>Here is a sample make file for the sprite 
+  project:<BR><BR><SPAN class=source>GCCARM = d:\gcc-arm<BR>INCDIR = 
+  $(GCCARM)\include <BR>LIBDIR = $(GCCARM)\lib <BR><BR>CFLAGS = -I $(INCDIR) -c 
+  -g -O2 -mthumb-interwork -Wall -save-temps -fverbose-asm <BR>ASFLAGS = 
+  -mthumb-interwork <BR>LDFLAGS = -L $(LIBDIR) -Ttext 0x08000000 -Tbss 
+  0x03000000 <BR><BR>all : sprite.bin <BR><BR>sprite.bin : sprite.elf 
+  <BR>objcopy -v -O binary sprite.elf sprite.bin <BR><BR>sprite.elf : crt0.o 
+  map.o sprite.o main.o <BR>ld $(LDFLAGS) -o sprite.elf crt0.o main.o map.o 
+  sprite.o -lc -lgcc <BR><BR>main.o : main.c <BR>gcc $(CFLAGS) main.c 
+  <BR><BR>map.o : map.c <BR>gcc $(CFLAGS) map.c <BR><BR>sprite.o : sprite.c 
+  <BR>gcc $(CFLAGS) sprite.c <BR></SPAN></LI></UL>
+<P><SPAN class=section>Getting the Runtime Libaries to Work</SPAN><BR><BR>You'll 
+notice in the above makefile that the C Compiler (GCC) has the parameter <SPAN 
+class=directory>-I $(INCBIN)</SPAN> which contains the parth to the GCC header 
+files. This is step one an allows use to use <SPAN class=directory>#include 
+&lt;stdio.h&gt;</SPAN> etc.<BR><BR>This is fine until you come to link the code. 
+For some reason on my setup, I have to tell the linker (LD) to link with the 
+runtime libraries specifically. Thus the <SPAN class=directory>-L 
+$(LIBDIR)</SPAN> on the linker command line. Finally we need to specify which 
+libraries we will use, this the standard runtime library <SPAN 
+class=directory>-lc</SPAN> and the GCC support library <SPAN 
+class=directory>-lgcc</SPAN><BR><BR>The <SPAN 
+class=directory>-l&lt;name&gt;</SPAN> command actually references the file <SPAN 
+class=directory>lib&lt;name&gt;.a</SPAN> on the disk which is why the libraries 
+are called <SPAN class=directory>libc.a</SPAN> and <SPAN 
+class=directory>libgcc.a</SPAN> respectively.<BR></P>
+<P class=section>Adding Files to Your Project</P>
+<P><IMG height=219 
+src="Setting Up Your GBA Development Environment_files/workspace.gif" width=186 
+align=right border=1>Altough the makefile takes care of compliation, the Visual 
+Studio project does not know which files belong to it. So you add files into the 
+appropriate sections (source, header and resource files). Do this by right 
+clicking on the section and choosing Add Files...<BR><BR>The project view is not 
+used to determine which files to compile. It only serves as an aid to you so you 
+can see the files your working on more easily.<BR><BR>On the right is an example 
+of how the sprite project would be laid out. Remember to add the dependancies 
+etc to the make file as well otherwise, they won't be compiled.</P>
+<P>&nbsp;</P>
+<P class=section>Conclusion</P>
+<P>Now, you can use the C runtime libraries and a fairly nice IDE. Visual Studio 
+is used to C syntax so you get source syntax highlighting and in Visual Studio 
+6.0 intellisense for your structures and objects!!! Very handy.<BR><BR>I know 
+that you can write integration object for Visual Studio so maybe one day someone 
+(maybe me) will write a GBA platform integration object or addin or whatever to 
+clear up a few of the loose ends.</P>
+<P>Hope this is of use to a few people, I must apologise to Linux fans coz this 
+is a WINTEL only solution.</P>
+<P>Matt Tighe</P>
+<P><A href="mailto:matt@matt-tighe.co.uk">matt@matt-tighe.co.uk</A></P>
+<P>Copyright (C)Savage Development<BR>This file was downloaded from <A 
+href="http://www.matt-tighe.co.uk/">http://www.matt-tighe.co.uk/</A></P></BODY></HTML>

@@ -1,0 +1,10 @@
+/* Platformer.c
+   My first gameboy game
+   By M.Evans */
+   
+#include "types.h"
+#include "cgb.h"
+#include "gb.h"
+
+void main() {
+  

@@ -1,0 +1,28 @@
+# Project: LilGuy
+# Makefile created by Dev-C++ 4.9.6.0
+
+CC   = gcc.exe
+WINDRES = windres.exe
+RES  = LilGuy_private.res
+OBJ  = lilguy.o $(RES)
+LIBS =  -L"C:/Dev-Cpp/lib" 
+INCS =  -I"C:/Dev-Cpp/include" 
+BIN  = LilGuy.exe
+CFLAGS = $(INCS)  -s
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before LilGuy.exe all-after
+
+
+clean: clean-custom
+	rm -f $(OBJ) $(BIN)
+
+$(BIN): $(OBJ)
+	$(CC) $(OBJ) -o "LilGuy.exe" $(LIBS) $(CFLAGS)
+
+lilguy.o: lilguy.c
+	$(CC) -c lilguy.c -o lilguy.o $(CFLAGS)
+
+LilGuy_private.res: 
+	$(WINDRES) -i LILGUY~1.RC -I rc -o LilGuy_private.res -O coff 
